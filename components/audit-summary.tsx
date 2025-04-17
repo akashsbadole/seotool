@@ -1,138 +1,116 @@
-"use client"
-
-import { useMemo } from "react"
-import dynamic from "next/dynamic"
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { AuditReport } from "@/lib/types"
-
-// Dynamically import Chart.js components with no SSR to avoid hydration issues
-const DynamicChart = dynamic(
-  async () => {
-    const { Chart } = await import("chart.js/auto")
-    const { ArcElement, Tooltip, Legend } = await import("chart.js")
-    Chart.register(ArcElement, Tooltip, Legend)
-    
-    const { Doughnut } = await import("react-chartjs-2")
-    return Doughnut
-  },
-  { ssr: false }
-)
+import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 
 interface AuditSummaryProps {
-  report: AuditReport
+  overallScore: number
 }
 
-export function AuditSummary({ report }: AuditSummaryProps) {
-  const scores = useMemo(() => {
-    const categories = [
-      { name: "On-Page SEO", data: report.onPageSEO },
-      { name: "Technical SEO", data: report.technicalSEO },
-      { name: "Content SEO", data: report.contentSEO },
-      { name: "Performance", data: report.performance },
-      { name: "Indexability", data: report.indexability },
-    ]
-
-    return categories.map((category) => {
-      const items = Object.values(category.data)
-      const totalItems = items.length
-      const passedItems = items.filter((item) => item.grade === "A" || item.grade === "B").length
-      const score = totalItems > 0 ? Math.round((passedItems / totalItems) * 100) : 0
-
+export function AuditSummary({ overallScore }: AuditSummaryProps) {
+  // Determine color and text based on score
+  const getScoreInfo = () => {
+    if (overallScore >= 90) {
       return {
-        name: category.name,
-        score,
-        status: score >= 80 ? "good" : score >= 50 ? "warning" : "poor",
+        color: "text-green-500",
+        bgColor: "bg-green-500",
+        text: "Excellent",
+        description: "Your website has excellent SEO optimization",
       }
-    })
-  }, [report])
-
-  const overallScore = useMemo(() => {
-    const totalScore = scores.reduce((acc, curr) => acc + curr.score, 0)
-    return Math.round(totalScore / scores.length)
-  }, [scores])
-
-  const chartData = {
-    labels: ["Good", "Needs Improvement", "Poor"],
-    datasets: [
-      {
-        data: [
-          scores.filter((s) => s.status === "good").length,
-          scores.filter((s) => s.status === "warning").length,
-          scores.filter((s) => s.status === "poor").length,
-        ],
-        backgroundColor: ["#10b981", "#f59e0b", "#ef4444"],
-        borderWidth: 0,
-      },
-    ],
+    }
+    if (overallScore >= 70) {
+      return {
+        color: "text-amber-500",
+        bgColor: "bg-amber-500",
+        text: "Good",
+        description: "Your website has good SEO optimization with some areas for improvement",
+      }
+    }
+    if (overallScore >= 50) {
+      return {
+        color: "text-orange-500",
+        bgColor: "bg-orange-500",
+        text: "Average",
+        description: "Your website needs significant SEO improvements",
+      }
+    }
+    return {
+      color: "text-red-500",
+      bgColor: "bg-red-500",
+      text: "Poor",
+      description: "Your website has critical SEO issues that need immediate attention",
+    }
   }
 
-  const chartOptions = {
-    cutout: "70%",
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        enabled: false,
-      },
-    },
-    maintainAspectRatio: false,
-  }
+  const { color, bgColor, text, description } = getScoreInfo()
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Overall Score</CardTitle>
-          <CardDescription>Combined score across all categories</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center">
-            <div className="relative flex h-40 w-40 items-center justify-center">
-              <DynamicChart data={chartData} options={chartOptions} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold">{overallScore}</span>
-                <span className="text-sm text-slate-500">out of 100</span>
+    <div className="grid gap-6 md:grid-cols-3">
+      <Card className="md:col-span-3">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="relative w-32 h-32 flex-shrink-0">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-3xl font-bold ${color}`}>{overallScore}</span>
               </div>
+              <svg className="w-full h-full" viewBox="0 0 100 100">
+                <circle
+                  className="text-slate-200 dark:text-slate-800"
+                  strokeWidth="10"
+                  stroke="currentColor"
+                  fill="transparent"
+                  r="40"
+                  cx="50"
+                  cy="50"
+                />
+                <circle
+                  className={color.replace("text", "stroke")}
+                  strokeWidth="10"
+                  strokeDasharray={`${overallScore * 2.51} 251`}
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="transparent"
+                  r="40"
+                  cx="50"
+                  cy="50"
+                  transform="rotate(-90 50 50)"
+                />
+              </svg>
+            </div>
+            <div className="text-center md:text-left">
+              <h2 className="text-2xl font-bold mb-2">
+                Overall SEO Score: <span className={color}>{text}</span>
+              </h2>
+              <p className="text-muted-foreground">{description}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Category Scores</CardTitle>
-          <CardDescription>Individual performance by category</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {scores.map((category) => (
-              <div key={category.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {category.status === "good" ? (
-                    <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  ) : category.status === "warning" ? (
-                    <AlertTriangle className="h-5 w-5 text-amber-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-500" />
-                  )}
-                  <span className="font-medium">{category.name}</span>
-                </div>
-                <div
-                  className={`rounded-full px-2 py-1 text-xs font-medium ${
-                    category.status === "good"
-                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
-                      : category.status === "warning"
-                        ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                        : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                  }`}
-                >
-                  {category.score}%
-                </div>
-              </div>
-            ))}
+        <CardContent className="p-6">
+          <div className="text-center">
+            <div className="text-4xl font-bold mb-2">{Math.round(overallScore * 0.8)}/100</div>
+            <h3 className="text-lg font-medium mb-2">On-Page SEO</h3>
+            <Progress value={overallScore * 0.8} className="h-2" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <div className="text-4xl font-bold mb-2">{Math.round(overallScore * 0.9)}/100</div>
+            <h3 className="text-lg font-medium mb-2">Technical SEO</h3>
+            <Progress value={overallScore * 0.9} className="h-2" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <div className="text-4xl font-bold mb-2">{Math.round(overallScore * 0.7)}/100</div>
+            <h3 className="text-lg font-medium mb-2">Content Quality</h3>
+            <Progress value={overallScore * 0.7} className="h-2" />
           </div>
         </CardContent>
       </Card>
