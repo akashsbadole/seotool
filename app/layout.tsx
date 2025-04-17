@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "SEO Audit Tool",
@@ -14,8 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+    <html lang="en">
+      <body suppressHydrationWarning={true}>
+        <Header />
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }

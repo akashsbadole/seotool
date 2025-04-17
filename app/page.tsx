@@ -1,5 +1,5 @@
-import { AuditForm } from "@/components/audit-form"
-import { HeroSection } from "@/components/hero-section"
+import { AuditForm } from "@/components/audit-form";
+import { HeroSection } from "@/components/hero-section";
 
 export default function Home() {
   return (
@@ -11,5 +11,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  )
+  );
 }
