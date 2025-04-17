@@ -58,12 +58,8 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
     "zod": "latest",
-    "chart.js": "latest",
-    "react-chartjs-2": "latest",
-    "axios": "latest",
-    "cheerio": "latest",
-    "puppeteer-core": "latest",
-    "@sparticuz/chromium": "latest"
+    "puppeteer": "latest",
+    "cheerio": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
